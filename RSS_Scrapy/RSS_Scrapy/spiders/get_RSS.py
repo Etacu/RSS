@@ -1,5 +1,5 @@
 import scrapy
-from RSS_Scrapy.RSS_Scrapy.items import RssReader
+from RSS_Scrapy.items import RssReader
 
 
 class RSSSpider(scrapy.Spider):
@@ -18,9 +18,15 @@ class RSSSpider(scrapy.Spider):
     }
 
     def parse(self, response):
+        links = response.xpath('//item/link/text()').extract()
 
+        for link in links:
+            item = RssReader()
+            item['link'] = link
+            yield scrapy.Request(
+                url=link, meta={'item': item}, callback=self.get_text
+            )
 
-
-
-
-
+    def get_text(self, response):
+        item = response.meta['item']
+        yield item

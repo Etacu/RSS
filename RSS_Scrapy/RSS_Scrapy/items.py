@@ -14,6 +14,12 @@ class RssScrapyItem(scrapy.Item):
     pass
 
 class RssReader(scrapy.Item):
+    id = scrapy.Field()
     name = scrapy.Field()
+    time = scrapy.Field()
     link = scrapy.Field()
     category = scrapy.Field()
+    Author = scrapy.Field()
+    text = scrapy.Field()
+    images = scrapy.Field()
+
