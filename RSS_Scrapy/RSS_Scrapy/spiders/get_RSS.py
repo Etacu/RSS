@@ -19,6 +19,11 @@ class RSSSpider(scrapy.Spider):
 
     def parse(self, response):
         links = response.xpath('//item/link/text()').extract()
+        items = response.xpath('//item').extract()
+        
+        for item in items:
+            item = RssReader()
+            item['link'] = item.xpath('link/text()').extract()
 
         for link in links:
             item = RssReader()
