@@ -35,3 +35,5 @@ class RSSSpider(scrapy.Spider):
     def get_text(self, response):
         item = response.meta['item']
         yield item
+        
+print('hsis')
