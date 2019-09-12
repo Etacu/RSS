@@ -22,18 +22,22 @@ class RSSSpider(scrapy.Spider):
         items = response.xpath('//item').extract()
         
         for item in items:
-            item = RssReader()
-            item['link'] = item.xpath('link/text()').extract()
+            rss = RssReader()
+            #  update in here
+            rss['link'] = it.xpath('link/text()').extract()
+            rss['name'] = it.xpath('name/text()').extract()
+            rss['time'] = it.xpath('puDate/text()').extract()
+            category = it.
 
         for link in links:
             item = RssReader()
             item['link'] = link
             yield scrapy.Request(
-                url=link, meta={'item': item}, callback=self.get_text
+                url=link, meta={'item': rss}, callback=self.get_text
             )
 
     def get_text(self, response):
         item = response.meta['item']
+        
         yield item
         
-print('hsis')
