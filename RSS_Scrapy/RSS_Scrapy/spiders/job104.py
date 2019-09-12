@@ -17,7 +17,7 @@ class JobSpider(scrapy.Spider):
         'https://www.104.com.tw/jobs/search/?ro=0&jobcat=2007000000&order=11&asc=0&page=1&mode=s&jobsource=2018indexpoc']
     custom_settings = {
         'FEED_EXPORT_ENCODING': 'utf-8',
-        'DOWNLOAD_DELAY': 3,
+        'DOWNLOAD_DELAY': 2,
         'RANDOMIZE_DOWNLOAD_DELAY': True
     }
 
