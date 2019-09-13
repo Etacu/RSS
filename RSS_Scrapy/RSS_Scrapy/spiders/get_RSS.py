@@ -70,6 +70,15 @@ class RSSpider(scrapy.Spider):
         for data in article:
             item['text'].append(data.xpath('text()').extract_first())
         yield item
+        
+        
+        
+    # itravel 
+    article = response.xpath('//article')
+    author = article.xpath('.//spqn[@class="entry-author"]/a/text()')
+    
+    
+    
 
 
 
