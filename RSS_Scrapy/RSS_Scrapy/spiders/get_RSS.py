@@ -77,6 +77,11 @@ class RSSpider(scrapy.Spider):
     article = response.xpath('//article')
     author = article.xpath('.//spqn[@class="entry-author"]/a/text()')
     
+    # viablog
+    
+    author = response.xpath('div[class="media-body"]/h4/tetx()') or ('//h4[@class="media-heading via"]/text()')
+    text = response.xpath('//p[@itemprop="articleBody"]') or ('//div[@style="text-align: center;"]')
+    
     
     
 
