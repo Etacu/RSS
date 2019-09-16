@@ -22,4 +22,4 @@ class RssReader(scrapy.Item):
     category = scrapy.Field()
     author = scrapy.Field()
     text = scrapy.Field()
-    imges = scrapy.Field()
+    images = scrapy.Field()
