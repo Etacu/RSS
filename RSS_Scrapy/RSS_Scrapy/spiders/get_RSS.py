@@ -6,18 +6,11 @@ def get_info(item, rss):
     rss['link'] = item.xpath('link/text()').extract_first()
     rss['title'] = item.xpath('title/text()').extract_first()
     rss['time'] = item.xpath('pubDate/text()').extract_first()
+    categories = item.xpath('category/text()').extract()
+    rss['category'] = []
+    for category in categories:
+        rss['category'].append(category)
     print(rss['link'])
-
-
-def get_infoma(res, back):
-    items = res.xpath('//item')
-    for item in items:
-        rss = RssReader()
-        get_info(item, rss)
-
-        yield scrapy.Request(
-            url=rss['link'], meta={'item': rss}, callback=back
-        )
 
 
 def search_img(article, item):
