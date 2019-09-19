@@ -8,6 +8,7 @@ def get_info(item, rss):
     rss['time'] = item.xpath('pubDate/text()').extract_first()
     categories = item.xpath('category/text()').extract()
     rss['category'] = []
+    rss['id'] += item.xpath('guid/text()').extract_first().split('=')[-1]
     for category in categories:
         rss['category'].append(category)
     print(rss['link'])
@@ -60,6 +61,7 @@ class RSSpider(scrapy.Spider):
         items = response.xpath('//item')
         for item in items:
             rss = RssReader()
+            rss['id'] = 'yu'
             get_info(item, rss)
 
             yield scrapy.Request(
@@ -78,6 +80,7 @@ class RSSpider(scrapy.Spider):
         items = response.xpath('//item')
         for item in items:
             rss = RssReader()
+            rss['id'] = 'c'
             get_info(item, rss)
 
             yield scrapy.Request(
@@ -96,6 +99,7 @@ class RSSpider(scrapy.Spider):
         items = response.xpath('//item')
         for item in items:
             rss = RssReader()
+            rss['id'] = 'whk'
             get_info(item, rss)
 
             yield scrapy.Request(
@@ -115,6 +119,7 @@ class RSSpider(scrapy.Spider):
         items = response.xpath('//item')
         for item in items:
             rss = RssReader()
+            rss['id'] = 'it'
             get_info(item, rss)
 
             yield scrapy.Request(
@@ -135,6 +140,7 @@ class RSSpider(scrapy.Spider):
         items = response.xpath('//item')
         for item in items:
             rss = RssReader()
+            rss['id'] = 'v'
             get_info(item, rss)
 
             yield scrapy.Request(
