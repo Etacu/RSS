@@ -1,11 +1,14 @@
 import scrapy
 from RSS_Scrapy.items import RssReader
+import psycopg2
 
 
-def get_info(item, rss):
+def get_info(item, rss, id):
+    if rss['id'] + item.xpath('guid/text()').extract_first().split('=')[-1] in id:
+        print(item.xpath('title/text()').extract_first())
+        return True
     rss['link'] = item.xpath('link/text()').extract_first()
     rss['title'] = item.xpath('title/text()').extract_first()
-    rss['time'] = item.xpath('pubDate/text()').extract_first()
     categories = item.xpath('category/text()').extract()
     rss['category'] = []
     rss['id'] += item.xpath('guid/text()').extract_first().split('=')[-1]
@@ -14,7 +17,7 @@ def get_info(item, rss):
     print(rss['link'])
 
 
-def search_img(article, item):
+def process_text(article, item):
     item['text'] = []
     item['images'] = []
     for data in article:
@@ -33,74 +36,126 @@ def search_img(article, item):
                 item['images'].append(img)
 
 
+def map_month(mon):
+    return {
+        'Jan': '01',
+        'Feb': '02',
+        'Mar': '03',
+        'Apr': '04',
+        'May': '05',
+        'Jun': '06',
+        'Jul': '07',
+        'Aug': '08',
+        'Sep': '09',
+        'Oct': '10',
+        'Nov': '11',
+        'Dec': '12'
+    }.get(mon, 'Non')
+
+
 class RSSpider(scrapy.Spider):
     name = 'RSS'
 
     def start_requests(self):
-        yield scrapy.Request('http://feeds.feedburner.com/yuminghui', self.parse_yumin)
-        yield scrapy.Request('http://feeds.feedburner.com/CommaTravel', self.parse_commatravel)
-        yield scrapy.Request('https://www.weekendhk.com/feed/', self.parse_weekendhk)
-        yield scrapy.Request('https://itravelblog.net/feed/', self.parse_itravel)
-        yield scrapy.Request('https://viablog.okmall.tw/blog/rss.php', self.parse_viablog)
+        conn = psycopg2.connect(database="d7jtuha77ma0q1",
+                                user="eklmwiezzzuyfz",
+                                password="12e338a1e992399d0b57bfce5691f20aafa834a9f439291701761a6d2289007c",
+                                host="ec2-184-73-232-93.compute-1.amazonaws.com",
+                                port="5432")
+        cursor = conn.cursor()
+        cursor.execute("select id from data1")
+        spiders_id = cursor.fetchall()
+        conn.close()
+
+        id = []
+        for i in spiders_id:
+            id.append(i[0])
+
+        yield scrapy.Request('http://feeds.feedburner.com/yuminghui', self.parse_yuminghui, meta={'id': id})
+        yield scrapy.Request('http://feeds.feedburner.com/CommaTravel', self.parse_Commatravel, meta={'id': id})
+        yield scrapy.Request('https://www.weekendhk.com/feed/', self.parse_weekendhk, meta={'id': id})
+        yield scrapy.Request('https://itravelblog.net/feed/', self.parse_itravelblog, meta={'id': id})
+        yield scrapy.Request('https://viablog.okmall.tw/blog/rss.php', self.parse_viablog, meta={'id': id})
 
     custom_settings = {
         'FEED_EXPORT_ENCODING': 'utf-8',
         'DOWNLOAD_DELAY': 2,
-        'RANDOMIZE_DOWNLOAD_DELAY': True
+        'RANDOMIZE_DOWNLOAD_DELAY': True,
+        'ITEM_PIPELINES': {
+            'RSS_Scrapy.pipelines.PostgresqlPipeline': 300
+        }
     }
 
     def parse(self, response):
-
         items = response.xpath('//item')
         for item in items:
             rss = RssReader()
             get_info(item, rss)
             yield rss
 
-    def parse_yumin(self, response):
+    def parse_yuminghui(self, response):
         items = response.xpath('//item')
+        id = response.meta['id']
         for item in items:
             rss = RssReader()
+
             rss['id'] = 'yu'
-            get_info(item, rss)
+            if get_info(item, rss, id):
+                print('already exist')
+                continue
+            time = item.xpath('pubDate/text()').extract_first().split(' ')
+            date = [time[3], map_month(time[2]), time[1]]
+            rss['time'] = '/'.join(date)
 
             yield scrapy.Request(
-                url=rss['link'], meta={'item': rss}, callback=self.web_yumin
+                url=rss['link'], meta={'item': rss}, callback=self.web_yuminghui
             )
 
-    def web_yumin(self, response):
+    def web_yuminghui(self, response):
         item = response.meta['item']
         item['author'] = 'morries'
         article = response.xpath('//article//p | //article//img')
-        search_img(article, item)
+        process_text(article, item)
 
         yield item
 
-    def parse_commatravel(self, response):
+    def parse_Commatravel(self, response):
         items = response.xpath('//item')
+        id = response.meta['id']
         for item in items:
             rss = RssReader()
             rss['id'] = 'c'
-            get_info(item, rss)
+            if get_info(item, rss, id):
+                print('already exist')
+                continue
+            time = item.xpath('pubDate/text()').extract_first().split(' ')
+            date = [time[3], map_month(time[2]), time[1]]
+            rss['time'] = '/'.join(date)
 
             yield scrapy.Request(
-                url=rss['link'], meta={'item': rss}, callback=self.web_commatravel
+                url=rss['link'], meta={'item': rss}, callback=self.web_Commatravel
             )
 
-    def web_commatravel(self, response):
+    def web_Commatravel(self, response):
         item = response.meta['item']
         article = response.xpath('//article')
         item['author'] = article.xpath('.//p[@class="post-byline"]//a/text()').extract_first()
-        search_img(article.xpath('.//div[@class="entry-inner"]//p | .//div[@class="entry-inner"]//img'), item)
+        process_text(article.xpath('.//div[@class="entry-inner"]//p | .//div[@class="entry-inner"]//img'), item)
 
         yield item
 
     def parse_weekendhk(self, response):
         items = response.xpath('//item')
+        id = response.meta['id']
         for item in items:
             rss = RssReader()
             rss['id'] = 'whk'
-            get_info(item, rss)
+            if get_info(item, rss, id):
+                print('already exist')
+                continue
+            time = item.xpath('pubDate/text()').extract_first().split(' ')
+            date = [time[3], map_month(time[2]), time[1]]
+            rss['time'] = '/'.join(date)
 
             yield scrapy.Request(
                 url=rss['link'], meta={'item': rss}, callback=self.web_weekendhk
@@ -111,37 +166,49 @@ class RSSpider(scrapy.Spider):
         item['author'] = response.xpath('//a[@itemprop="author"]/text()').extract_first()
         adasia = response.xpath('//div[@class="_content_ AdAsia"]')
         article = adasia.xpath('.//p | .//img | .//figcaption | .//h2')
-        search_img(article, item)
+        process_text(article, item)
 
         yield item
 
-    def parse_itravel(self, response):
+    def parse_itravelblog(self, response):
         items = response.xpath('//item')
+        id = response.meta['id']
         for item in items:
             rss = RssReader()
             rss['id'] = 'it'
-            get_info(item, rss)
+            if get_info(item, rss, id):
+                print('already exist')
+                continue
+            time = item.xpath('pubDate/text()').extract_first().split(' ')
+            date = [time[3], map_month(time[2]), time[1]]
+            rss['time'] = '/'.join(date)
 
             yield scrapy.Request(
-                url=rss['link'], meta={'item': rss}, callback=self.web_itravel
+                url=rss['link'], meta={'item': rss}, callback=self.web_itravelblog
             )
 
-    def web_itravel(self, response):
+    def web_itravelblog(self, response):
         item = response.meta['item']
         article = response.xpath('//article')
         author = article.xpath('.//span[@class="entry-author"]/a/span/text()').extract_first()
         item['author'] = author
         text = article.xpath('./div[@class="entry-content"]//p |./div[@class="entry-content"]//img')
-        search_img(text[0:len(text) - 2], item)
+        process_text(text[0:len(text) - 2], item)
 
         yield item
 
     def parse_viablog(self, response):
         items = response.xpath('//item')
+        id = response.meta['id']
         for item in items:
             rss = RssReader()
             rss['id'] = 'v'
-            get_info(item, rss)
+            if get_info(item, rss, id):
+                print('already exist')
+                continue
+            time = item.xpath('pubDate/text()').extract_first()
+            date = time[0:4], time[5:7], time[8:10]
+            rss['time'] = '/'.join(date)
 
             yield scrapy.Request(
                 url=rss['link'], meta={'item': rss}, callback=self.web_viablog
