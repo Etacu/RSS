@@ -7,5 +7,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://ec2-184-73-232-93.compute-1.amazonaws.com:5432/d7jtuha77ma0q1</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="django" uuid="29c9c93e-d89a-45e5-869c-26322ca73e8e">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://ec2-54-235-92-244.compute-1.amazonaws.com:5432/d5bohq4onavh67</jdbc-url>
+    </data-source>
   </component>
 </project>

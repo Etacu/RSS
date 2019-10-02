@@ -92,9 +92,9 @@ ITEM_PIPELINES = {
 
 DATABASE = {
     'drivername': 'postgres',
-    'host': 'ec2-184-73-232-93.compute-1.amazonaws.com',
+    'host': 'ec2-54-235-92-244.compute-1.amazonaws.com',
     'port': '5432',
-    'username': 'eklmwiezzzuyfz',
-    'password': '12e338a1e992399d0b57bfce5691f20aafa834a9f439291701761a6d2289007c',
-    'database': 'd7jtuha77ma0q1'
+    'username': 'gcrsthkibrpxux',
+    'password': 'f3eb802b01d69e072ad072e7680ae91ff47be8e6af23f58fc4e74be33cf50fd7',
+    'database': 'd5bohq4onavh67'
 }

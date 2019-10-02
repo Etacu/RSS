@@ -57,13 +57,13 @@ class RSSpider(scrapy.Spider):
     name = 'RSS'
 
     def start_requests(self):
-        conn = psycopg2.connect(database="d7jtuha77ma0q1",
-                                user="eklmwiezzzuyfz",
-                                password="12e338a1e992399d0b57bfce5691f20aafa834a9f439291701761a6d2289007c",
-                                host="ec2-184-73-232-93.compute-1.amazonaws.com",
+        conn = psycopg2.connect(database="d5bohq4onavh67",
+                                user="gcrsthkibrpxux",
+                                password="f3eb802b01d69e072ad072e7680ae91ff47be8e6af23f58fc4e74be33cf50fd7",
+                                host="ec2-54-235-92-244.compute-1.amazonaws.com",
                                 port="5432")
         cursor = conn.cursor()
-        cursor.execute("select id from data1")
+        cursor.execute("select id from data")
         spiders_id = cursor.fetchall()
         conn.close()
 
@@ -100,6 +100,7 @@ class RSSpider(scrapy.Spider):
             rss = RssReader()
 
             rss['id'] = 'yu'
+            rss['source'] = 'yumingui'
             if get_info(item, rss, id):
                 print('already exist')
                 continue
@@ -125,6 +126,7 @@ class RSSpider(scrapy.Spider):
         for item in items:
             rss = RssReader()
             rss['id'] = 'c'
+            rss['source'] = 'Commatravel'
             if get_info(item, rss, id):
                 print('already exist')
                 continue
@@ -150,6 +152,7 @@ class RSSpider(scrapy.Spider):
         for item in items:
             rss = RssReader()
             rss['id'] = 'whk'
+            rss['source'] = 'weekendhk'
             if get_info(item, rss, id):
                 print('already exist')
                 continue
@@ -176,6 +179,7 @@ class RSSpider(scrapy.Spider):
         for item in items:
             rss = RssReader()
             rss['id'] = 'it'
+            rss['source'] = 'itravelblog'
             if get_info(item, rss, id):
                 print('already exist')
                 continue
@@ -203,6 +207,7 @@ class RSSpider(scrapy.Spider):
         for item in items:
             rss = RssReader()
             rss['id'] = 'v'
+            rss['source'] = 'viablog'
             if get_info(item, rss, id):
                 print('already exist')
                 continue

@@ -23,3 +23,4 @@ class RssReader(scrapy.Item):
     author = scrapy.Field()
     text = scrapy.Field()
     images = scrapy.Field()
+    source = scrapy.Field()
