@@ -27,7 +27,7 @@ class PostgresqlPipeline(object):
         #                         host="ec2-184-73-232-93.compute-1.amazonaws.com",
         #                         port="5432")
         cursor = conn.cursor()
-        insert_sql = """ insert into data (id, title, date, link, author, text, images, category, tag, display, source)
+        insert_sql = """ insert into data (id, title, time, link, author, text, images, category, tag, display, source)
                 values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
         cursor.execute(insert_sql,
                        (
@@ -39,11 +39,10 @@ class PostgresqlPipeline(object):
                            item['text'],
                            item['images'],
                            item['category'],
-                           '',
+                           item['tag'],
                            't',
-                           item['source']))
+                           item['source'],))
 
         conn.commit()
 
         conn.close()
-

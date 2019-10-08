@@ -1,9 +1,12 @@
 import scrapy
 from RSS_Scrapy.items import RssReader
 import psycopg2
+import uuid
+from scrapy import FormRequest
 
 
 def get_info(item, rss, id):
+    # 　判斷此ID 有無在DataBase，有的話就跳過
     if rss['id'] + item.xpath('guid/text()').extract_first().split('=')[-1] in id:
         print(item.xpath('title/text()').extract_first())
         return True
@@ -12,6 +15,8 @@ def get_info(item, rss, id):
     categories = item.xpath('category/text()').extract()
     rss['category'] = []
     rss['id'] += item.xpath('guid/text()').extract_first().split('=')[-1]
+    #   ID轉為UUID
+    rss['id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, rss['id']))
     for category in categories:
         rss['category'].append(category)
     print(rss['link'])
@@ -36,6 +41,7 @@ def process_text(article, item):
                 item['images'].append(img)
 
 
+# 月份轉換
 def map_month(mon):
     return {
         'Jan': '01',
@@ -51,6 +57,28 @@ def map_month(mon):
         'Nov': '11',
         'Dec': '12'
     }.get(mon, 'Non')
+
+
+def get_tagbypost(self, item):
+    return scrapy.Request(url="https://api2.sstrm.net/util/api/dummyAPI",
+                          method='POST',
+                          headers={
+                              'Content-Type': 'application/json'
+                          },
+                          meta={"id": item['id'],
+                                "title": item['title'],
+                                "content": item['text'],
+                                "url": item['link'],
+                                "image": item['images'],
+                                "item": item
+                                },
+                          # meta={"id": "sad",
+                          #       "title": "rss['title']",
+                          #       "content": "rss['text']",
+                          #       "url": "rss['link']",
+                          #       "image": "rss['images']"},
+                          dont_filter=True,
+                          callback=self.after_post)
 
 
 class RSSpider(scrapy.Spider):
@@ -71,6 +99,8 @@ class RSSpider(scrapy.Spider):
         for i in spiders_id:
             id.append(i[0])
 
+        # yield scrapy.Request('https://api2.sstrm.net/util/api/dummyAPI', self.get_tagbypost)
+
         yield scrapy.Request('http://feeds.feedburner.com/yuminghui', self.parse_yuminghui, meta={'id': id})
         yield scrapy.Request('http://feeds.feedburner.com/CommaTravel', self.parse_Commatravel, meta={'id': id})
         yield scrapy.Request('https://www.weekendhk.com/feed/', self.parse_weekendhk, meta={'id': id})
@@ -86,12 +116,17 @@ class RSSpider(scrapy.Spider):
         }
     }
 
-    def parse(self, response):
-        items = response.xpath('//item')
-        for item in items:
-            rss = RssReader()
-            get_info(item, rss)
-            yield rss
+    def after_post(self, response):
+        # print(response)
+        # print('-------')
+        # print(type(response.text))
+
+        item = response.meta['item']
+        item['tag'] = response.text.split(':')[2].split('[')[1].split(']')[0]
+        # print(item)
+
+        yield item
+        # return
 
     def parse_yuminghui(self, response):
         items = response.xpath('//item')
@@ -99,6 +134,7 @@ class RSSpider(scrapy.Spider):
         for item in items:
             rss = RssReader()
 
+            # 此網頁的id開頭
             rss['id'] = 'yu'
             rss['source'] = 'yumingui'
             if get_info(item, rss, id):
@@ -118,13 +154,15 @@ class RSSpider(scrapy.Spider):
         article = response.xpath('//article//p | //article//img')
         process_text(article, item)
 
-        yield item
+        yield get_tagbypost(self, item)
 
     def parse_Commatravel(self, response):
         items = response.xpath('//item')
         id = response.meta['id']
         for item in items:
             rss = RssReader()
+
+            # 此網頁的id開頭
             rss['id'] = 'c'
             rss['source'] = 'Commatravel'
             if get_info(item, rss, id):
@@ -142,15 +180,20 @@ class RSSpider(scrapy.Spider):
         item = response.meta['item']
         article = response.xpath('//article')
         item['author'] = article.xpath('.//p[@class="post-byline"]//a/text()').extract_first()
-        process_text(article.xpath('.//div[@class="entry-inner"]//p | .//div[@class="entry-inner"]//img'), item)
+        process_text(article.xpath(
+            './/div[@class="entry-inner"]//p | '
+            './/div[@class="entry-inner"]/child::*[not(@id="wp_rp_first")]//img')
+            , item)
 
-        yield item
+        yield get_tagbypost(self, item)
 
     def parse_weekendhk(self, response):
         items = response.xpath('//item')
         id = response.meta['id']
         for item in items:
             rss = RssReader()
+
+            # 此網頁的id開頭
             rss['id'] = 'whk'
             rss['source'] = 'weekendhk'
             if get_info(item, rss, id):
@@ -171,13 +214,15 @@ class RSSpider(scrapy.Spider):
         article = adasia.xpath('.//p | .//img | .//figcaption | .//h2')
         process_text(article, item)
 
-        yield item
+        yield get_tagbypost(self, item)
 
     def parse_itravelblog(self, response):
         items = response.xpath('//item')
         id = response.meta['id']
         for item in items:
             rss = RssReader()
+
+            # 此網頁的id開頭
             rss['id'] = 'it'
             rss['source'] = 'itravelblog'
             if get_info(item, rss, id):
@@ -199,13 +244,15 @@ class RSSpider(scrapy.Spider):
         text = article.xpath('./div[@class="entry-content"]//p |./div[@class="entry-content"]//img')
         process_text(text[0:len(text) - 2], item)
 
-        yield item
+        yield get_tagbypost(self, item)
 
     def parse_viablog(self, response):
         items = response.xpath('//item')
         id = response.meta['id']
         for item in items:
             rss = RssReader()
+
+            # 此網頁的id開頭
             rss['id'] = 'v'
             rss['source'] = 'viablog'
             if get_info(item, rss, id):
@@ -245,4 +292,4 @@ class RSSpider(scrapy.Spider):
                 text_temp = text_ex.replace('\r\n', '')
             item['text'].append(text_temp)
 
-        yield item
+        yield get_tagbypost(self, item)
